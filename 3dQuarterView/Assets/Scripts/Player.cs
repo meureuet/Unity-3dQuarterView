@@ -5,40 +5,76 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     public int speed;
-    float hAxis;
-    float vAxis;
-    bool walkDown;
+    private float hAxis;
+    private float vAxis;
+    private bool walkKeyDown;
+    private bool jumpKeyDown;
 
-    Vector3 moveVector;
+    private bool isJump;
 
-    Animator animator;
+    private Vector3 moveVector;
 
-    void Awake()
+    private Rigidbody rigid;
+    private Animator animator;
+
+    private void Awake()
     {
+        rigid = GetComponent<Rigidbody>();
         // 자식의 Animator 가져오기
         animator = GetComponentInChildren<Animator>();
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
+    {
+        GetInput();
+        Move();
+        Turn();
+        Jump();
+    }
+
+    private void GetInput()
     {
         // 키 입력
         hAxis = Input.GetAxisRaw("Horizontal");
         vAxis = Input.GetAxisRaw("Vertical");
-        walkDown = Input.GetButton("Walk");
+        walkKeyDown = Input.GetButton("Walk");
+        jumpKeyDown = Input.GetButtonDown("Jump");
+    }
 
+    private void Move()
+    {
         moveVector = new Vector3(hAxis, 0, vAxis).normalized;
 
-        // 키 입력 시 이동
-        transform.position += moveVector * speed * (walkDown ? 0.5f : 1f) * Time.deltaTime;
+        // 이동
+        transform.position += moveVector * speed * (walkKeyDown ? 0.5f : 1f) * Time.deltaTime;
 
         // 키 입력 시 애니메이션
         animator.SetBool("isRun", moveVector != Vector3.zero);
-        animator.SetBool("isWalk", walkDown);
+        animator.SetBool("isWalk", walkKeyDown);
+    }
 
+    private void Turn()
+    {
         // 키 입력 방향 바라보기
         transform.LookAt(transform.position + moveVector);
+    }
 
+    private void Jump()
+    {   
+        if (jumpKeyDown && !isJump)
+        {   
+            // 위쪽으로 힘, 즉시 
+            rigid.AddForce(Vector3.up * 15, ForceMode.Impulse);
+            isJump = true;
+        }
+    }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.tag == "Floor")
+        {
+            isJump = false;
+        }
     }
 }
