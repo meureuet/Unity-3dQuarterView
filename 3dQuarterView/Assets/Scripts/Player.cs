@@ -4,15 +4,17 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public int speed;
+    public float speed;
     private float hAxis;
     private float vAxis;
     private bool walkKeyDown;
     private bool jumpKeyDown;
 
     private bool isJump;
+    private bool isDodge;
 
     private Vector3 moveVector;
+    private Vector3 dodgeVector;
 
     private Rigidbody rigid;
     private Animator animator;
@@ -31,6 +33,7 @@ public class Player : MonoBehaviour
         Move();
         Turn();
         Jump();
+        Dodge();
     }
 
     private void GetInput()
@@ -45,6 +48,11 @@ public class Player : MonoBehaviour
     private void Move()
     {
         moveVector = new Vector3(hAxis, 0, vAxis).normalized;
+
+        if (isDodge)
+        {
+            moveVector = dodgeVector;
+        }
 
         // 이동
         transform.position += moveVector * speed * (walkKeyDown ? 0.5f : 1f) * Time.deltaTime;
@@ -62,7 +70,7 @@ public class Player : MonoBehaviour
 
     private void Jump()
     {   
-        if (jumpKeyDown && !isJump)
+        if (jumpKeyDown && !isJump && moveVector == Vector3.zero && !isDodge)
         {   
             // 위쪽으로 힘, 즉시 
             rigid.AddForce(Vector3.up * 15, ForceMode.Impulse);
@@ -70,6 +78,26 @@ public class Player : MonoBehaviour
             animator.SetTrigger("doJump");
             isJump = true;
         }
+    }
+    
+    private void Dodge()
+    {   
+        if (jumpKeyDown && !isDodge && moveVector != Vector3.zero && !isJump)
+        {
+            dodgeVector = moveVector;
+            speed += 2;
+            animator.SetTrigger("doDodge");
+            isDodge = true;
+
+            // 0.4초 뒤에 실행
+            Invoke("DodgeOut", 0.4f);
+        }
+    }
+
+    void DodgeOut()
+    {
+        isDodge = false;
+        speed -= 2;
     }
 
     private void OnCollisionEnter(Collision collision)
