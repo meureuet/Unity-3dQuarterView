@@ -66,6 +66,8 @@ public class Player : MonoBehaviour
         {   
             // 위쪽으로 힘, 즉시 
             rigid.AddForce(Vector3.up * 15, ForceMode.Impulse);
+            animator.SetBool("isJump", true);
+            animator.SetTrigger("doJump");
             isJump = true;
         }
     }
@@ -74,6 +76,7 @@ public class Player : MonoBehaviour
     {
         if(collision.gameObject.tag == "Floor")
         {
+            animator.SetBool("isJump", false);
             isJump = false;
         }
     }
