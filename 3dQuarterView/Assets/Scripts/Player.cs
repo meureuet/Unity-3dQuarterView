@@ -23,9 +23,12 @@ public class Player : MonoBehaviour
     private float hAxis;
     private float vAxis;
 
+    private float attackDelay;
+
     private bool walkKeyDown;
     private bool jumpKeyDown;
     private bool interactionKeyDown;
+    private bool attackKeyDown;
 
     bool swapKeyDown1;
     bool swapKeyDown2;
@@ -34,6 +37,7 @@ public class Player : MonoBehaviour
     private bool isJump;
     private bool isDodge;
     private bool isSwap;
+    private bool isAttackReady;
 
     private Vector3 moveVector;
     private Vector3 dodgeVector;
@@ -42,13 +46,14 @@ public class Player : MonoBehaviour
     private Animator animator;
 
     GameObject nearObject;
-    GameObject equipWeapon;
+    Weapon equipWeapon;
 
     private void Awake()
     {
         rigid = GetComponent<Rigidbody>();
         // 자식의 Animator 가져오기
         animator = GetComponentInChildren<Animator>();
+        isAttackReady = true;
     }
 
     // Update is called once per frame
@@ -58,6 +63,7 @@ public class Player : MonoBehaviour
         Move();
         Turn();
         Jump();
+        Attack();
         Dodge();
         Interaction();
         Swap();
@@ -70,6 +76,7 @@ public class Player : MonoBehaviour
         vAxis = Input.GetAxisRaw("Vertical");
         walkKeyDown = Input.GetButton("Walk");
         jumpKeyDown = Input.GetButtonDown("Jump");
+        attackKeyDown = Input.GetButtonDown("Fire1");
         interactionKeyDown = Input.GetButtonDown("Interaction");
         swapKeyDown1 = Input.GetButtonDown("Swap1");
         swapKeyDown2 = Input.GetButtonDown("Swap2");
@@ -86,7 +93,7 @@ public class Player : MonoBehaviour
         }
 
         // 무기 스왑 시 이동 불가
-        if (isSwap)
+        if (isSwap || !isAttackReady)
         {
             moveVector = Vector3.zero;
         }
@@ -117,6 +124,23 @@ public class Player : MonoBehaviour
         }
     }
     
+    private void Attack()
+    {
+        if(equipWeapon == null)
+        {
+            return;
+        }
+
+        attackDelay += Time.deltaTime;
+        isAttackReady = equipWeapon.attackRate < attackDelay;
+
+        if(attackKeyDown && isAttackReady && !isDodge && !isSwap)
+        {
+            equipWeapon.Use();
+            animator.SetTrigger("doSwing");
+            attackDelay = 0; 
+        }
+    }
     private void Dodge()
     {   
         if (jumpKeyDown && !isDodge && moveVector != Vector3.zero && !isJump && !isSwap)
@@ -149,10 +173,10 @@ public class Player : MonoBehaviour
         {
             if(equipWeapon != null)
             {
-                equipWeapon.SetActive(false);
+                equipWeapon.gameObject.SetActive(false);
             }
-            equipWeapon = weapons[weaponIndex];
-            equipWeapon.SetActive(true);
+            equipWeapon = weapons[weaponIndex].GetComponent<Weapon>();
+            equipWeapon.gameObject.SetActive(true);
 
             animator.SetTrigger("doSwap");
 
