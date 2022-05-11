@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    public Camera cam;
+
     public GameObject[] weapons;
     public bool[] hasWeapons;
 
@@ -29,6 +31,7 @@ public class Player : MonoBehaviour
     private bool jumpKeyDown;
     private bool interactionKeyDown;
     private bool attackKeyDown;
+    private bool reloadKeyDown;
 
     bool swapKeyDown1;
     bool swapKeyDown2;
@@ -38,6 +41,7 @@ public class Player : MonoBehaviour
     private bool isDodge;
     private bool isSwap;
     private bool isAttackReady;
+    private bool isReload;
 
     private Vector3 moveVector;
     private Vector3 dodgeVector;
@@ -64,6 +68,7 @@ public class Player : MonoBehaviour
         Turn();
         Jump();
         Attack();
+        Reload();
         Dodge();
         Interaction();
         Swap();
@@ -76,7 +81,8 @@ public class Player : MonoBehaviour
         vAxis = Input.GetAxisRaw("Vertical");
         walkKeyDown = Input.GetButton("Walk");
         jumpKeyDown = Input.GetButtonDown("Jump");
-        attackKeyDown = Input.GetButtonDown("Fire1");
+        attackKeyDown = Input.GetButton("Fire1");
+        reloadKeyDown = Input.GetButtonDown("Reload");
         interactionKeyDown = Input.GetButtonDown("Interaction");
         swapKeyDown1 = Input.GetButtonDown("Swap1");
         swapKeyDown2 = Input.GetButtonDown("Swap2");
@@ -93,7 +99,7 @@ public class Player : MonoBehaviour
         }
 
         // 무기 스왑 시 이동 불가
-        if (isSwap || !isAttackReady)
+        if (isSwap || !isAttackReady || isReload)
         {
             moveVector = Vector3.zero;
         }
@@ -110,6 +116,21 @@ public class Player : MonoBehaviour
     {
         // 키 입력 방향 바라보기
         transform.LookAt(transform.position + moveVector);
+
+        // 마우스 클릭 방향 바라보기
+        if(attackKeyDown)
+        {
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+
+            RaycastHit raycastHit;
+            if (Physics.Raycast(ray, out raycastHit, 100))
+            {
+                Vector3 nextVector = raycastHit.point - transform.position;
+                // 고저차 방향 동일하게
+                nextVector.y = 0f;
+                transform.LookAt(transform.position + nextVector);
+            }
+        }
     }
 
     private void Jump()
@@ -137,10 +158,61 @@ public class Player : MonoBehaviour
         if(attackKeyDown && isAttackReady && !isDodge && !isSwap)
         {
             equipWeapon.Use();
-            animator.SetTrigger("doSwing");
+            if(equipWeapon.weaponType == Weapon.WeaponType.Melee)
+            {
+                animator.SetTrigger("doSwing");
+            }
+            else if(equipWeapon.weaponType == Weapon.WeaponType.Range)
+            {
+                animator.SetTrigger("doSwing");
+            }
+            
             attackDelay = 0; 
         }
     }
+
+    private void Reload()
+    {
+        if(equipWeapon == null)
+        {
+            return;
+        }
+
+        if (equipWeapon.weaponType == Weapon.WeaponType.Melee)
+        {
+            return;
+        }
+
+        if (ammo == 0)
+        {
+            return;
+        }
+
+        if(reloadKeyDown && !isJump && !isDodge && !isSwap && isAttackReady)
+        {
+            animator.SetTrigger("doReload");
+            isReload = true;
+
+            Invoke("ReloadOut", 2.7f);
+        }
+    }
+
+    private void ReloadOut()
+    {
+        // 최대 장전 불가능하면
+        if (ammo < equipWeapon.maxAmmo)
+        {
+            equipWeapon.currentAmmo = ammo;  
+        }
+        // 최대 장전 가능하면
+        else
+        {
+            equipWeapon.currentAmmo = equipWeapon.maxAmmo;
+        }
+        ammo -= equipWeapon.currentAmmo;
+        isReload = false;
+    }
+
     private void Dodge()
     {   
         if (jumpKeyDown && !isDodge && moveVector != Vector3.zero && !isJump && !isSwap)
