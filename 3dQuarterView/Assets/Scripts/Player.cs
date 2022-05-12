@@ -162,7 +162,7 @@ public class Player : MonoBehaviour
         attackDelay += Time.deltaTime;
         isAttackReady = equipWeapon.attackRate < attackDelay;
 
-        if(attackKeyDown && isAttackReady && !isDodge && !isSwap)
+        if(attackKeyDown && isAttackReady && !isDodge && !isSwap && !isReload)
         {
             equipWeapon.Use();
             if(equipWeapon.weaponType == Weapon.WeaponType.Melee)
@@ -171,7 +171,7 @@ public class Player : MonoBehaviour
             }
             else if(equipWeapon.weaponType == Weapon.WeaponType.Range)
             {
-                animator.SetTrigger("doSwing");
+                animator.SetTrigger("doShot");
             }
             
             attackDelay = 0; 
