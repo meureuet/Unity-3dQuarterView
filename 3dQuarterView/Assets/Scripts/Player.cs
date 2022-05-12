@@ -42,6 +42,7 @@ public class Player : MonoBehaviour
     private bool isSwap;
     private bool isAttackReady;
     private bool isReload;
+    private bool isBorder;
 
     private Vector3 moveVector;
     private Vector3 dodgeVector;
@@ -98,14 +99,20 @@ public class Player : MonoBehaviour
             moveVector = dodgeVector;
         }
 
-        // 무기 스왑 시 이동 불가
+        // 무기 스왑, 공격, 장전 시 이동 불가
         if (isSwap || !isAttackReady || isReload)
-        {
+        {   
+            // 회전도 못함
             moveVector = Vector3.zero;
         }
 
-        // 이동
-        transform.position += moveVector * speed * (walkKeyDown ? 0.5f : 1f) * Time.deltaTime;
+        // 가장자리 아닐 때 이동 가능
+        if (!isBorder)
+        {
+            // 이동
+            transform.position += moveVector * speed * (walkKeyDown ? 0.5f : 1f) * Time.deltaTime;
+        }
+        
 
         // 키 입력 시 애니메이션
         animator.SetBool("isRun", moveVector != Vector3.zero);
@@ -322,6 +329,24 @@ public class Player : MonoBehaviour
             }
             Destroy(other.gameObject);
         }
+    }
+
+    private void FreezeRotation()
+    {
+        // 회전속도 0으로 제어
+        rigid.angularVelocity = Vector3.zero;
+    }
+
+    private void StopToWall()
+    {
+        Debug.DrawRay(transform.position, transform.forward * 5, Color.green);
+        isBorder = Physics.Raycast(transform.position, transform.forward, 5, LayerMask.GetMask("Wall"));
+    }
+
+    private void FixedUpdate()
+    {
+        FreezeRotation();
+        StopToWall();
     }
 
     private void OnTriggerStay(Collider other)

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 6717659172161058918}
   - component: {fileID: 6717659172161058919}
   - component: {fileID: 6717659172161058915}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BulletSubMachineGun
   m_TagString: Untagged
   m_Icon: {fileID: 0}
