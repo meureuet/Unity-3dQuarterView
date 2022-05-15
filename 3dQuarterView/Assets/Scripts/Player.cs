@@ -11,6 +11,7 @@ public class Player : MonoBehaviour
 
     public GameObject[] grenades;
     public int hasGrenades;
+    public GameObject grenadeObject;
 
     public int ammo;
     public int coin;
@@ -31,6 +32,7 @@ public class Player : MonoBehaviour
     private bool jumpKeyDown;
     private bool interactionKeyDown;
     private bool attackKeyDown;
+    private bool granadeKeyDown;
     private bool reloadKeyDown;
 
     bool swapKeyDown1;
@@ -69,6 +71,7 @@ public class Player : MonoBehaviour
         Turn();
         Jump();
         Attack();
+        Grenade();
         Reload();
         Dodge();
         Interaction();
@@ -83,6 +86,7 @@ public class Player : MonoBehaviour
         walkKeyDown = Input.GetButton("Walk");
         jumpKeyDown = Input.GetButtonDown("Jump");
         attackKeyDown = Input.GetButton("Fire1");
+        granadeKeyDown = Input.GetButtonDown("Fire2");
         reloadKeyDown = Input.GetButtonDown("Reload");
         interactionKeyDown = Input.GetButtonDown("Interaction");
         swapKeyDown1 = Input.GetButtonDown("Swap1");
@@ -175,6 +179,35 @@ public class Player : MonoBehaviour
             }
             
             attackDelay = 0; 
+        }
+    }
+
+    private void Grenade()
+    {
+        if(hasGrenades == 0)
+        {
+            return;
+        }
+
+        if(granadeKeyDown && !isReload && !isSwap)
+        {
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+
+            RaycastHit raycastHit;
+            if (Physics.Raycast(ray, out raycastHit, 100))
+            {
+                Vector3 nextVector = raycastHit.point - transform.position;
+                // 고저차 방향 동일하게
+                nextVector.y = 10;
+
+                GameObject instantGrenade = Instantiate(grenadeObject, transform.position, transform.rotation);
+                Rigidbody rigidGrenade = instantGrenade.GetComponent<Rigidbody>();
+                rigidGrenade.AddForce(nextVector, ForceMode.Impulse);
+                rigidGrenade.AddTorque(Vector3.back * 10, ForceMode.Impulse);
+
+                hasGrenades--;
+                grenades[hasGrenades].SetActive(false);
+            }
         }
     }
 

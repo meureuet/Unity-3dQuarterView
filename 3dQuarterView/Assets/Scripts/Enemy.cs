@@ -28,7 +28,7 @@ public class Enemy : MonoBehaviour
             
             // ÇöÀç À§Ä¡ - ´êÀº ÁöÁ¡ = º¤ÅÍ°ª ±¸ÇÔ
             Vector3 reactVector = transform.position - other.transform.position;
-            StartCoroutine(OnDamage(reactVector));
+            StartCoroutine(OnDamage(reactVector, false));
         }
 
         else if(other.tag == "Bullet")
@@ -39,11 +39,18 @@ public class Enemy : MonoBehaviour
             Vector3 reactVector = transform.position - other.transform.position;
             // ´êÀº ÃÑ¾Ë »èÁ¦
             Destroy(other.gameObject);
-            StartCoroutine(OnDamage(reactVector));
+            StartCoroutine(OnDamage(reactVector, false));
         }
     }
 
-    IEnumerator OnDamage(Vector3 reactVector)
+    public void HitByGrenade(Vector3 explosionPosition)
+    {
+        currentHealth -= 100;
+        Vector3 reactVector = transform.position - explosionPosition;
+        StartCoroutine(OnDamage(reactVector, true));
+    }
+
+    IEnumerator OnDamage(Vector3 reactVector, bool isGrenade)
     {
         material.color = Color.red;
         yield return new WaitForSeconds(0.1f);
@@ -57,11 +64,26 @@ public class Enemy : MonoBehaviour
             material.color = Color.gray;
             gameObject.layer = 12;
 
-            reactVector = reactVector.normalized;
-            reactVector += Vector3.up;
+            if (isGrenade)
+            {
+                reactVector = reactVector.normalized;
+                reactVector += Vector3.up*3;
 
-            // º¤ÅÍ ÀÌ¿ëÇÑ ³Ë¹é
-            rb.AddForce(reactVector * 5, ForceMode.Impulse);
+                rb.freezeRotation = false;
+                // º¤ÅÍ ÀÌ¿ëÇÑ ³Ë¹é
+                rb.AddForce(reactVector * 5, ForceMode.Impulse);
+                rb.AddTorque(reactVector * 15, ForceMode.Impulse);
+            }
+            else
+            {
+                reactVector = reactVector.normalized;
+                reactVector += Vector3.up;
+
+                // º¤ÅÍ ÀÌ¿ëÇÑ ³Ë¹é
+                rb.AddForce(reactVector * 5, ForceMode.Impulse);
+            }
+
+            
             // 4ÃÊ µÚ¿¡ »ç¶óÁü
             Destroy(gameObject, 4);
         }
