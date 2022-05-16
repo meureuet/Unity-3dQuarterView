@@ -45,12 +45,14 @@ public class Player : MonoBehaviour
     private bool isAttackReady;
     private bool isReload;
     private bool isBorder;
+    private bool isDamage;
 
     private Vector3 moveVector;
     private Vector3 dodgeVector;
 
     private Rigidbody rigid;
     private Animator animator;
+    private MeshRenderer[] meshs;
 
     GameObject nearObject;
     Weapon equipWeapon;
@@ -61,6 +63,7 @@ public class Player : MonoBehaviour
         // 자식의 Animator 가져오기
         animator = GetComponentInChildren<Animator>();
         isAttackReady = true;
+        meshs = GetComponentsInChildren<MeshRenderer>();
     }
 
     // Update is called once per frame
@@ -361,6 +364,37 @@ public class Player : MonoBehaviour
                     break;
             }
             Destroy(other.gameObject);
+        }
+        else if(other.tag=="EnemyBullet")
+        {
+            if (!isDamage)
+            {
+                Bullet enemyBullet = other.GetComponent<Bullet>();
+                heart -= enemyBullet.damage;
+                if(other.GetComponent<Rigidbody>() != null)
+                {
+                    Destroy(other.gameObject);
+                }
+                StartCoroutine(OnDamage());
+            }
+        }
+    }
+
+    IEnumerator OnDamage()
+    {
+        
+        isDamage = true;
+        foreach(MeshRenderer mesh in meshs)
+        {
+            mesh.material.color = Color.yellow;
+        }
+
+        yield return new WaitForSeconds(1f);
+
+        isDamage = false;
+        foreach (MeshRenderer mesh in meshs)
+        {
+            mesh.material.color = Color.white;
         }
     }
 
